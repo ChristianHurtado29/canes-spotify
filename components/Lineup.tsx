@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { collection, getDocs, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../src/firebaseConfig';
 import axios from 'axios';
+import Link from 'next/link';
 
 export default function Lineup() {
   const [currentSong, setCurrentSong] = useState('');
@@ -31,11 +32,11 @@ export default function Lineup() {
     );
   };
 
-  const addPlayer = async () => {
-    const docRef = await addDoc(collection(db, "players"), newPlayer);
-    setPlayers([...players, { id: docRef.id, ...newPlayer }]);
-    setNewPlayer({ name: '', spotifyUri: '', startTime: 0 }); // Reset form fields
-  };
+  // const addPlayer = async () => {
+  //   const docRef = await addDoc(collection(db, "players"), newPlayer);
+  //   setPlayers([...players, { id: docRef.id, ...newPlayer }]);
+  //   setNewPlayer({ name: '', spotifyUri: '', startTime: 0 }); // Reset form fields
+  // };
 
   const playSong = async (spotifyUri: string, startTime: number) => {
     setCurrentSong(spotifyUri);
@@ -48,10 +49,13 @@ export default function Lineup() {
 
   return (
     <div>
+       <Link href="/addPlayer">
+          Add a New Player Profile
+      </Link>
       <h1>Team Lineup</h1>
       
       {/* Form to Add New Player */}
-      <h2>Add New Player</h2>
+      {/* <h2>Add New Player</h2>
       <div>
         <label>
           Name:
@@ -78,13 +82,13 @@ export default function Lineup() {
           />
         </label>
         <button onClick={addPlayer}>Add Player</button>
-      </div>
+      </div> */}
 
       {/* Existing Players */}
       {players.map((player) => (
         <div key={player.id} style={{ marginTop: '20px' }}>
           <h3>{player.name}</h3>
-          <label>
+          {/* <label>
             Name:
             <input
               type="text"
@@ -107,7 +111,7 @@ export default function Lineup() {
               value={player.startTime}
               onChange={(e) => updatePlayer(player.id, "startTime", Number(e.target.value))}
             />
-          </label>
+          </label> */}
           <button onClick={() => playSong(player.spotifyUri, player.startTime)}>
             Play {player.name}'s Song
           </button>
