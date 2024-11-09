@@ -6,11 +6,11 @@ import axios from 'axios';
 export default function Lineup() {
   const [currentSong, setCurrentSong] = useState('');
   const [players, setPlayers] = useState([]);
-  //   { name: "Ellis", spotifyUri: "spotify:track:4svkPL62HbvyFgf0nHFXAF", startTime: 24000 },
-  //   { name: "Christian", spotifyUri: "spotify:track:1Bqg4yFeVDJxchh6MjkGKy", startTime: 15500 },
-  //   { name: "Haris", spotifyUri: "spotify:track:6f3Slt0GbA2bPZlz0aIFXN", startTime: 38000 },
-  //   { name: "JRey", spotifyUri: "spotify:track:1IloGy93XVauxyAaXeVnym", startTime: 0 }
-  // ]);
+  const [newPlayer, setNewPlayer] = useState({
+    name: '',
+    spotifyUri: '',
+    startTime: 0,
+  });
 
   useEffect(() => {
     const fetchPlayers = async () => {
@@ -22,7 +22,7 @@ export default function Lineup() {
     fetchPlayers();
   }, []);
 
-  const updatePlayer = async (id: string | number, field: string, value: string | number) => {
+  const updatePlayer = async (id: string, field: string, value: string | number) => {
     const playerDoc = doc(db, "players", id);
     await updateDoc(playerDoc, { [field]: value });
 
@@ -32,9 +32,9 @@ export default function Lineup() {
   };
 
   const addPlayer = async () => {
-    const newPlayer = { name: "", spotifyUri: "", startTime: 0 };
     const docRef = await addDoc(collection(db, "players"), newPlayer);
     setPlayers([...players, { id: docRef.id, ...newPlayer }]);
+    setNewPlayer({ name: '', spotifyUri: '', startTime: 0 }); // Reset form fields
   };
 
   const playSong = async (spotifyUri: string, startTime: number) => {
@@ -49,10 +49,41 @@ export default function Lineup() {
   return (
     <div>
       <h1>Team Lineup</h1>
-      <button onClick={addPlayer}>Add Player</button>
+      
+      {/* Form to Add New Player */}
+      <h2>Add New Player</h2>
+      <div>
+        <label>
+          Name:
+          <input
+            type="text"
+            value={newPlayer.name}
+            onChange={(e) => setNewPlayer({ ...newPlayer, name: e.target.value })}
+          />
+        </label>
+        <label>
+          Spotify URI:
+          <input
+            type="text"
+            value={newPlayer.spotifyUri}
+            onChange={(e) => setNewPlayer({ ...newPlayer, spotifyUri: e.target.value })}
+          />
+        </label>
+        <label>
+          Start Time (ms):
+          <input
+            type="number"
+            value={newPlayer.startTime}
+            onChange={(e) => setNewPlayer({ ...newPlayer, startTime: Number(e.target.value) })}
+          />
+        </label>
+        <button onClick={addPlayer}>Add Player</button>
+      </div>
 
+      {/* Existing Players */}
       {players.map((player) => (
-        <div key={player.id}>
+        <div key={player.id} style={{ marginTop: '20px' }}>
+          <h3>{player.name}</h3>
           <label>
             Name:
             <input
@@ -77,6 +108,9 @@ export default function Lineup() {
               onChange={(e) => updatePlayer(player.id, "startTime", Number(e.target.value))}
             />
           </label>
+          <button onClick={() => playSong(player.spotifyUri, player.startTime)}>
+            Play {player.name}'s Song
+          </button>
         </div>
       ))}
     </div>

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-const SPOTIFY_ACCESS_TOKEN = "BQAItW8n88MnsWtwYVhwvslOeOxtiFdavFDCOFULY9q_oNNEzbnV2nIq-63u9DIlBRJFpLZdeBT6J9-Pa2ZGtfu3J7E1ERMFPhOdtYMv1FOzZ8SCbJVi3vDr2Mi7LcCDuW2kEOW6bUaHE6FSFPkZCXlaxRTzZu7x0ao9Gv4hvLrZwwjojcnRzkGjy8_Mu8J8syRzLg"
+const SPOTIFY_ACCESS_TOKEN = "BQBFYiPQXFsRJvYUuzJ0WqZk8TqxwD4U4Ci6hA-eAN-2EnULrjTBLv1jwSeSezYAstMQSSoZZ5ayGCi7QRBaGQnidu50QEELaHDPVWk5kBv3_q7pMYP_QcKCGtY9Ka7sRPk8UVD3jtHfinDDU6Q9SsL6q7LCqvMIqMRf1ov1shMs_ehil3wMGpIKlnVzU6sLlQFR5w"
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { spotifyUri, startTime } = req.body;
