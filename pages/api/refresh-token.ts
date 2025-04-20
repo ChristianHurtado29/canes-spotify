@@ -28,8 +28,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { access_token, refresh_token } = response.data;
 
     res.status(200).json({ access_token, refresh_token });
-  } catch (error) {
-    console.error('Error exchanging code for token:', error.response ? error.response.data : error.message);
-    res.status(500).json({ error: 'Error exchanging code for token' });
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      console.error(error.response?.data || error.message);
+    } else {
+      console.error('Unknown error during code for token:', error);
+    }
   }
 }
