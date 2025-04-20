@@ -138,7 +138,7 @@ function AddPlayerContent() {
     value={searchQuery}
     onChange={(e) => setSearchQuery(e.target.value)}
   />
-  <button onClick={handleSearch}>Search</button>
+  <button type="button" onClick={handleSearch}>Search</button>
 </div>
 
 
