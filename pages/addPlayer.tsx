@@ -33,7 +33,7 @@ function InitTokenSync() {
 }
 
 function AddPlayerContent() {
-  const { accessToken } = useToken();
+  const { accessToken, isLoading } = useToken();
   const [playerName, setPlayerName] = useState('');
   const [startTimeInput, setStartTimeInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -45,28 +45,44 @@ function AddPlayerContent() {
     const token = accessToken?.trim();
     const query = searchQuery.trim();
 
-    if (!query || !token) {
-      alert('Search query or token missing');
+    console.log('🎯 Triggering search', { query, token });
+
+    if (!query) {
+      alert('Please enter a search term');
       return;
     }
+
+    if (!token || token.length < 10) {
+      alert('Spotify token not ready. Try again in a moment.');
+      console.warn('❌ Token is missing or invalid:', token);
+      return;
+    }
+
+    const encodedQuery = encodeURIComponent(query);
 
     try {
       const data = await spotifyApiRequest<SpotifyTrackSearchResponse>({
         method: 'get',
         url: 'https://api.spotify.com/v1/search',
-        params: { q: query, type: 'track', limit: 10 },
+        params: {
+          q: encodedQuery,
+          type: 'track',
+          limit: 10,
+        },
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
+      console.log('✅ Got results from Spotify:', data.tracks.items);
       setSearchResults(data.tracks.items);
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
         console.error('🎤 Spotify search error:', error.response?.data || error.message);
-        alert(JSON.stringify(error.response?.data, null, 2));
+        alert(JSON.stringify(error.response?.data || error.message, null, 2));
       } else {
         console.error('❓ Unknown error during search:', error);
+        alert('Unknown error during search');
       }
     }
   };
@@ -148,7 +164,13 @@ function AddPlayerContent() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
-        <button type="button" onClick={handleSearch}>Search</button>
+        <button
+          type="button"
+          onClick={handleSearch}
+          disabled={isLoading || !accessToken}
+        >
+          {isLoading ? 'Loading Token...' : 'Search'}
+        </button>
       </div>
 
       <ul>
