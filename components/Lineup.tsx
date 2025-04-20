@@ -8,7 +8,6 @@ import { useToken } from '../src/context/TokenContext';
 
 export default function Lineup() {
   const { accessToken, isLoading } = useToken();
-  console.log('useToken result:', useToken());
   const [currentSong, setCurrentSong] = useState('');
   const [players, setPlayers] = useState([]);
   const [newPlayer, setNewPlayer] = useState({
@@ -17,7 +16,6 @@ export default function Lineup() {
     startTime: 0,
   });
 
-  console.log('useToken in SpotifyPlayer:', useToken());
   useEffect(() => {
     const fetchPlayers = async () => {
       const querySnapshot = await getDocs(collection(db, "players"));

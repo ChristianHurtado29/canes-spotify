@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 interface TokenContextType {
   accessToken: string;
   isLoading: boolean;
+  setAccessToken: (token: string) => void;
 }
 
 const TokenContext = createContext<TokenContextType | undefined>(undefined);
@@ -16,7 +17,7 @@ export const TokenProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       try {
         const response = await fetch('/api/refresh-token');
         const data = await response.json();
-        console.log('data',  data)
+        console.log('data', data);
         setAccessToken(data.access_token);
       } catch (error) {
         console.error('Error fetching access token:', error);
@@ -27,13 +28,14 @@ export const TokenProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     fetchAccessToken();
 
+    // Refresh token every 55 minutes
     const interval = setInterval(fetchAccessToken, 55 * 60 * 1000);
 
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <TokenContext.Provider value={{ accessToken, isLoading }}>
+    <TokenContext.Provider value={{ accessToken, isLoading, setAccessToken }}>
       {children}
     </TokenContext.Provider>
   );

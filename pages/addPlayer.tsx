@@ -1,9 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { db } from '../src/firebaseConfig';
 import { collection, addDoc } from 'firebase/firestore';
-import axios from 'axios';
+import { TokenProvider, useToken } from '../src/context/TokenContext';
+import { spotifyApiRequest, initTokenSync } from './api/spotifyApiClient';
 
-export default function AddPlayer() {
+function InitTokenSync() {
+  const { accessToken, setAccessToken } = useToken();
+
+  useEffect(() => {
+    initTokenSync({
+      get: () => accessToken,
+      set: setAccessToken,
+    });
+  }, [accessToken, setAccessToken]);
+
+  return null;
+}
+
+function AddPlayerContent() {
   const [playerName, setPlayerName] = useState('');
   const [startTime, setStartTime] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
@@ -11,29 +25,46 @@ export default function AddPlayer() {
   const [selectedUri, setSelectedUri] = useState('');
   const [selectedSong, setSelectedSong] = useState('');
 
+  const { accessToken } = useToken(); // safe now
+
   const handleSearch = async () => {
+    if (!searchQuery) return;
+  
     try {
-      const response = await axios.get('/api/search', {
-        params: { query: searchQuery }
+      // Directly query Spotify from the browser
+      const data = await spotifyApiRequest({
+        method: 'get',
+        url: 'https://api.spotify.com/v1/search',
+        params: { q: searchQuery, type: 'track', limit: 10 },
       });
-      console.log(response.data)
-      setSearchResults(response.data.tracks.items);
-    } catch (error) {
-      console.error('Error searching for song:', error);
+  
+      setSearchResults(data.tracks.items);
+    } catch (error: any) {
+      console.error('Error searching Spotify:', error.response?.data || error.message);
     }
   };
+  
+  
 
   const addPlayer = async () => {
     if (!playerName || !selectedUri) {
       alert('Please enter a name and select a song');
       return;
     }
-    const newPlayer = { name: playerName, spotifyUri: selectedUri, startTime };
+
+    const newPlayer = {
+      name: playerName,
+      spotifyUri: selectedUri,
+      startTime,
+    };
+
     await addDoc(collection(db, 'players'), newPlayer);
+
     setPlayerName('');
     setSelectedUri('');
     setSelectedSong('');
     setStartTime(0);
+
     alert('Player added successfully!');
   };
 
@@ -45,7 +76,7 @@ export default function AddPlayer() {
   return (
     <div>
       <h1>Add Player Profile</h1>
-      
+
       <label>
         Name:
         <input
@@ -77,7 +108,7 @@ export default function AddPlayer() {
       </label>
 
       <ul>
-        {searchResults.map((track) => (
+        {searchResults.map((track: any) => (
           <li key={track.id}>
             <button onClick={() => selectSong(track.uri, track.name)}>
               {track.name} by {track.artists[0].name}
@@ -85,6 +116,7 @@ export default function AddPlayer() {
           </li>
         ))}
       </ul>
+
       {selectedSong && (
         <p>
           Selected Song: <strong>{selectedSong}</strong>
@@ -99,5 +131,14 @@ export default function AddPlayer() {
         </p>
       )}
     </div>
+  );
+}
+
+export default function AddPlayer() {
+  return (
+    <TokenProvider>
+      <InitTokenSync />
+      <AddPlayerContent />
+    </TokenProvider>
   );
 }
