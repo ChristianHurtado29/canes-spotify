@@ -33,6 +33,7 @@ function InitTokenSync() {
 }
 
 function AddPlayerContent() {
+  const { accessToken } = useToken();
   const [playerName, setPlayerName] = useState('');
   const [startTimeInput, setStartTimeInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,29 +41,25 @@ function AddPlayerContent() {
   const [selectedUri, setSelectedUri] = useState('');
   const [selectedSong, setSelectedSong] = useState('');
 
-  const { accessToken } = useToken(); // already declared at top of AddPlayerContent
-
-  console.log('📦 AddPlayer page loaded');
-
-
   const handleSearch = async () => {
     const token = accessToken?.trim();
-  
-    if (!searchQuery || !token) {
+    const query = searchQuery.trim();
+
+    if (!query || !token) {
       alert('Search query or token missing');
       return;
     }
-  
+
     try {
       const data = await spotifyApiRequest<SpotifyTrackSearchResponse>({
         method: 'get',
         url: 'https://api.spotify.com/v1/search',
-        params: { q: searchQuery, type: 'track', limit: 10 },
+        params: { q: query, type: 'track', limit: 10 },
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-  
+
       setSearchResults(data.tracks.items);
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
@@ -73,7 +70,6 @@ function AddPlayerContent() {
       }
     }
   };
-  
 
   const addPlayer = async () => {
     if (!playerName || !selectedUri) {
@@ -145,17 +141,15 @@ function AddPlayerContent() {
       <br />
 
       <div>
-  <label htmlFor="song-search">Song Search:</label>
-  <input
-    id="song-search"
-    type="text"
-    value={searchQuery}
-    onChange={(e) => setSearchQuery(e.target.value)}
-  />
-  <button type="button" onClick={handleSearch}>Search</button>
-
-</div>
-
+        <label htmlFor="song-search">Song Search:</label>
+        <input
+          id="song-search"
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+        <button type="button" onClick={handleSearch}>Search</button>
+      </div>
 
       <ul>
         {searchResults.map((track: Track) => (
