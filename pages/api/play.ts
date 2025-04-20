@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -28,13 +28,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     );
 
     return res.status(response.status).json(response.data);
-  } catch (error: any) {
-    console.error('Error playing song:', error.response ? error.response.data : error.message);
-
-    if (error.response) {
-      return res.status(error.response.status).json(error.response.data);
-    } else {
-      return res.status(500).json({ error: 'Error playing song' });
-    }
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError;
+    console.error(axiosError.response?.data || axiosError.message);
   }
 }

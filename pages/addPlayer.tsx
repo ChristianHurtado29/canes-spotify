@@ -3,6 +3,20 @@ import { db } from '../src/firebaseConfig';
 import { collection, addDoc } from 'firebase/firestore';
 import { TokenProvider, useToken } from '../src/context/TokenContext';
 import { spotifyApiRequest, initTokenSync } from './api/spotifyApiClient';
+import axios from 'axios';
+
+type Track = {
+  id: string;
+  name: string;
+  uri: string;
+  artists: { name: string }[];
+};
+
+type SpotifyTrackSearchResponse = {
+  tracks: {
+    items: Track[];
+  };
+};
 
 function InitTokenSync() {
   const { accessToken, setAccessToken } = useToken();
@@ -12,45 +26,63 @@ function InitTokenSync() {
       get: () => accessToken,
       set: setAccessToken,
     });
-  }, [accessToken, setAccessToken]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return null;
 }
 
 function AddPlayerContent() {
   const [playerName, setPlayerName] = useState('');
-  const [startTime, setStartTime] = useState(0);
+  const [startTimeInput, setStartTimeInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState<Track[]>([]);
   const [selectedUri, setSelectedUri] = useState('');
   const [selectedSong, setSelectedSong] = useState('');
 
-  const { accessToken } = useToken(); // safe now
-
   const handleSearch = async () => {
+    console.log('click')
     if (!searchQuery) return;
-  
+
     try {
-      // Directly query Spotify from the browser
-      const data = await spotifyApiRequest({
+      const data = await spotifyApiRequest<SpotifyTrackSearchResponse>({
         method: 'get',
         url: 'https://api.spotify.com/v1/search',
         params: { q: searchQuery, type: 'track', limit: 10 },
       });
-  
+
       setSearchResults(data.tracks.items);
-    } catch (error: any) {
-      console.error('Error searching Spotify:', error.response?.data || error.message);
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        console.error(error.response?.data || error.message);
+      } else {
+        console.error('Unknown error during search:', error);
+      }
     }
   };
-  
-  
 
   const addPlayer = async () => {
     if (!playerName || !selectedUri) {
       alert('Please enter a name and select a song');
       return;
     }
+
+    const [minutesStr, secondsStr] = startTimeInput.split(':');
+    const minutes = parseInt(minutesStr, 10);
+    const seconds = parseInt(secondsStr, 10);
+
+    if (
+      isNaN(minutes) ||
+      isNaN(seconds) ||
+      minutes < 0 ||
+      seconds < 0 ||
+      seconds > 59
+    ) {
+      alert('Please enter a valid start time in mm:ss format');
+      return;
+    }
+
+    const startTime = minutes * 60 * 1000 + seconds * 1000;
 
     const newPlayer = {
       name: playerName,
@@ -63,7 +95,7 @@ function AddPlayerContent() {
     setPlayerName('');
     setSelectedUri('');
     setSelectedSong('');
-    setStartTime(0);
+    setStartTimeInput('');
 
     alert('Player added successfully!');
   };
@@ -88,27 +120,30 @@ function AddPlayerContent() {
       <br />
 
       <label>
-        Start Time (ms):
+        Start Time (mm:ss):
         <input
-          type="number"
-          value={startTime}
-          onChange={(e) => setStartTime(Number(e.target.value))}
+          type="text"
+          value={startTimeInput}
+          onChange={(e) => setStartTimeInput(e.target.value)}
+          placeholder="e.g. 1:30"
         />
       </label>
       <br />
 
-      <label>
-        Song Search:
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        <button onClick={handleSearch}>Search</button>
-      </label>
+      <div>
+  <label htmlFor="song-search">Song Search:</label>
+  <input
+    id="song-search"
+    type="text"
+    value={searchQuery}
+    onChange={(e) => setSearchQuery(e.target.value)}
+  />
+  <button onClick={handleSearch}>Search</button>
+</div>
+
 
       <ul>
-        {searchResults.map((track: any) => (
+        {searchResults.map((track: Track) => (
           <li key={track.id}>
             <button onClick={() => selectSong(track.uri, track.name)}>
               {track.name} by {track.artists[0].name}
