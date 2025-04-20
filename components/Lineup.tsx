@@ -1,22 +1,22 @@
 import { useState, useEffect } from 'react';
-import { collection, getDocs} from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../src/firebaseConfig';
 import axios from 'axios';
 import Link from 'next/link';
-// import SpotifyPlayer from './SpotifyPlayer';
 import { useToken } from '../src/context/TokenContext';
 
-interface Player {
+type Player = {
   id: string;
   name: string;
   spotifyUri: string;
   startTime: number;
-  alwaysPlayFull: false
-}
+  alwaysPlayFull?: boolean;
+};
 
 export default function Lineup() {
-  const { accessToken } = useToken();
+  const { accessToken, isLoading } = useToken();
   const [players, setPlayers] = useState<Player[]>([]);
+  const [currentSong, setCurrentSong] = useState('');
 
   useEffect(() => {
     const fetchPlayers = async () => {
@@ -31,29 +31,25 @@ export default function Lineup() {
     fetchPlayers();
   }, []);
 
-  // const updatePlayer = async (id: string, field: keyof Player, value: string | number) => {
-  //   const playerDoc = doc(db, 'players', id);
-  //   await updateDoc(playerDoc, { [field]: value });
-
-  //   setPlayers((prevPlayers) =>
-  //     prevPlayers.map((player) =>
-  //       player.id === id ? { ...player, [field]: value } : player
-  //     )
-  //   );
-  // };
-
   const playSong = async (
     spotifyUri: string,
     startTime: number,
-    alwaysPlayFull: boolean,
+    alwaysPlayFull: boolean = false
   ) => {
+    if (isLoading || !accessToken) {
+      alert('Spotify token is not ready. Please try again in a moment.');
+      return;
+    }
+    console.log(currentSong)
+    setCurrentSong(spotifyUri);
+
     try {
       await axios.put('/api/play', {
         spotifyUri,
         startTime,
         accessToken,
       });
-  
+
       if (!alwaysPlayFull) {
         setTimeout(() => {
           axios
@@ -65,13 +61,27 @@ export default function Lineup() {
             .catch((err) => {
               console.error('Error pausing song:', err);
             });
-        }, 15000);
+        }, 15000); // ⏱ Pause after 15 seconds
+      } else {
+        console.log('Playing full song (alwaysPlayFull = true)');
       }
     } catch (error) {
       console.error('Error playing song:', error);
     }
   };
+
+  const deletePlayer = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this player?')) return;
   
+    try {
+      await deleteDoc(doc(db, 'players', id));
+      setPlayers((prev) => prev.filter((player) => player.id !== id));
+      console.log(`✅ Player ${id} deleted`);
+    } catch (error) {
+      console.error('❌ Error deleting player:', error);
+      alert('Something went wrong deleting the player.');
+    }
+  };
   
 
   return (
@@ -82,15 +92,18 @@ export default function Lineup() {
       {players.map((player) => (
         <div key={player.id} style={{ marginTop: '20px' }}>
           <h3>{player.name}</h3>
-          <button onClick={() => playSong(player.spotifyUri, player.startTime, player.alwaysPlayFull)}>
+          <button
+            onClick={() =>
+              playSong(player.spotifyUri, player.startTime, player.alwaysPlayFull)
+            }
+          >
             Play {player.name}&apos;s Song
+          </button>
+          <button onClick={() => deletePlayer(player.id)} style={{ marginLeft: '10px', color: 'red' }}>
+            Delete
           </button>
         </div>
       ))}
-{/* 
-      <div>
-        <SpotifyPlayer />
-      </div> */}
     </div>
   );
 }

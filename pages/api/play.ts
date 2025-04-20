@@ -30,6 +30,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(response.status).json(response.data);
   } catch (error: unknown) {
     const axiosError = error as AxiosError;
-    console.error(axiosError.response?.data || axiosError.message);
+    console.error('Spotify play error:', axiosError.response?.data || axiosError.message);
+
+    return res
+      .status(axiosError.response?.status || 500)
+      .json({ error: 'Failed to play track' });
   }
 }

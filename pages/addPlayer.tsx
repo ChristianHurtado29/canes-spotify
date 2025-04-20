@@ -40,26 +40,42 @@ function AddPlayerContent() {
   const [selectedUri, setSelectedUri] = useState('');
   const [selectedSong, setSelectedSong] = useState('');
 
-  const handleSearch = async () => {
-    console.log('click')
-    if (!searchQuery) return;
+  const { accessToken } = useToken(); // already declared at top of AddPlayerContent
 
-    try {
-      const data = await spotifyApiRequest<SpotifyTrackSearchResponse>({
-        method: 'get',
-        url: 'https://api.spotify.com/v1/search',
-        params: { q: searchQuery, type: 'track', limit: 10 },
-      });
+  console.log('📦 AddPlayer page loaded');
 
-      setSearchResults(data.tracks.items);
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        console.error(error.response?.data || error.message);
-      } else {
-        console.error('Unknown error during search:', error);
-      }
+
+const handleSearch = async () => {
+  console.log('🎯 SEARCH FIRED', { query: searchQuery });
+
+  if (!searchQuery.trim()) {
+    console.warn('Search query is empty.');
+    return;
+  }
+
+  if (!accessToken) {
+    console.warn('⛔ No access token found. Cannot search.');
+    return;
+  }
+
+  try {
+    const data = await spotifyApiRequest<SpotifyTrackSearchResponse>({
+      method: 'get',
+      url: 'https://api.spotify.com/v1/search',
+      params: { q: searchQuery, type: 'track', limit: 10 },
+    });
+
+    console.log('🎵 Got search results:', data.tracks.items);
+    setSearchResults(data.tracks.items);
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      console.error('🎤 Spotify search error:', error.response?.data || error.message);
+      alert(JSON.stringify(error.response?.data, null, 2));
+    } else {
+      console.error('❓ Unknown error during search:', error);
     }
-  };
+  }
+};
 
   const addPlayer = async () => {
     if (!playerName || !selectedUri) {
@@ -139,6 +155,7 @@ function AddPlayerContent() {
     onChange={(e) => setSearchQuery(e.target.value)}
   />
   <button type="button" onClick={handleSearch}>Search</button>
+
 </div>
 
 

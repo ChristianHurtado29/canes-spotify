@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const authHeader = req.headers.authorization;
@@ -21,12 +21,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     );
 
-    res.status(204).end();
+    return res.status(204).end();
   } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-        console.error(error.response?.data || error.message);
-      } else {
-        console.error('Unknown error during pause:', error);
-      }
+    const axiosError = error as AxiosError;
+
+    console.error('Spotify pause error:', axiosError.response?.data || axiosError.message);
+
+    return res
+      .status(axiosError.response?.status || 500)
+      .json({ error: 'Failed to pause playback' });
   }
 }
