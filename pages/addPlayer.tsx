@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { db } from '../src/firebaseConfig';
 import { collection, addDoc } from 'firebase/firestore';
 import { TokenProvider, useToken } from '../src/context/TokenContext';
