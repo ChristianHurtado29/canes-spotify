@@ -45,37 +45,35 @@ function AddPlayerContent() {
   console.log('📦 AddPlayer page loaded');
 
 
-const handleSearch = async () => {
-  console.log('🎯 SEARCH FIRED', { query: searchQuery });
-
-  if (!searchQuery.trim()) {
-    console.warn('Search query is empty.');
-    return;
-  }
-
-  if (!accessToken) {
-    console.warn('⛔ No access token found. Cannot search.');
-    return;
-  }
-
-  try {
-    const data = await spotifyApiRequest<SpotifyTrackSearchResponse>({
-      method: 'get',
-      url: 'https://api.spotify.com/v1/search',
-      params: { q: searchQuery, type: 'track', limit: 10 },
-    });
-
-    console.log('🎵 Got search results:', data.tracks.items);
-    setSearchResults(data.tracks.items);
-  } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      console.error('🎤 Spotify search error:', error.response?.data || error.message);
-      alert(JSON.stringify(error.response?.data, null, 2));
-    } else {
-      console.error('❓ Unknown error during search:', error);
+  const handleSearch = async () => {
+    const token = accessToken?.trim();
+  
+    if (!searchQuery || !token) {
+      alert('Search query or token missing');
+      return;
     }
-  }
-};
+  
+    try {
+      const data = await spotifyApiRequest<SpotifyTrackSearchResponse>({
+        method: 'get',
+        url: 'https://api.spotify.com/v1/search',
+        params: { q: searchQuery, type: 'track', limit: 10 },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      setSearchResults(data.tracks.items);
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        console.error('🎤 Spotify search error:', error.response?.data || error.message);
+        alert(JSON.stringify(error.response?.data, null, 2));
+      } else {
+        console.error('❓ Unknown error during search:', error);
+      }
+    }
+  };
+  
 
   const addPlayer = async () => {
     if (!playerName || !selectedUri) {

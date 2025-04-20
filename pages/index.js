@@ -3,6 +3,7 @@ import Lineup from '../components/Lineup';
 import { TokenProvider, useToken } from '@/context/TokenContext';
 import { initTokenSync } from './api/spotifyApiClient';
 import { useEffect } from 'react';
+import { Analytics } from "@vercel/analytics/react"
 
 function InitTokenSync() {
   const { accessToken, setAccessToken } = useToken();
@@ -27,6 +28,7 @@ export default function Home() {
       <main>
         <Lineup />
       </main>
+      <Analytics />
     </TokenProvider>
   );
 }
