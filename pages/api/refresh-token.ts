@@ -6,6 +6,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET } = process.env;
 
+  if (!refreshToken) {
+    return res.status(400).json({ error: 'Missing refresh token' });
+  }
+
   const authOptions = {
     url: 'https://accounts.spotify.com/api/token',
     method: 'post',
@@ -22,11 +26,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const response = await axios(authOptions);
     const { access_token, refresh_token } = response.data;
-    console.log('Access Token:', access_token);
-    console.log('Refresh Token:', refresh_token);
-    console.log('Client ID:', process.env.SPOTIFY_CLIENT_ID);
-    console.log('Client Secret:', process.env.SPOTIFY_CLIENT_SECRET);
-    console.log('Refresh Token2:', process.env.SPOTIFY_REFRESH_TOKEN);
 
     res.status(200).json({ access_token, refresh_token });
   } catch (error) {
