@@ -61,9 +61,14 @@ function AddPlayerContent() {
       );
 
       setSearchResults(response.data.tracks.items);
-    } catch (error: any) {
-      console.error('Spotify search error:', error.response?.data || error.message);
-      alert(JSON.stringify(error.response?.data || error.message, null, 2));
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        console.error('Spotify search error:', error.response?.data || error.message);
+        alert(JSON.stringify(error.response?.data || error.message, null, 2));
+      } else {
+        console.error('Unknown error during search:', error);
+        alert('Something went wrong with the search.');
+      }
     }
   };
 
